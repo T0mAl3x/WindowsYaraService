@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Linq;
+﻿using System.Diagnostics;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 using System.Runtime.InteropServices;
+using System.IO;
+using System.Collections.Generic;
 
 namespace WindowsYaraService
 {
@@ -37,7 +32,7 @@ namespace WindowsYaraService
 
     public partial class YaraService : ServiceBase
     {
-        private int eventId = 1;
+        private List<FileSystemWatcher> mFileSystemWatchers = new List<FileSystemWatcher>();
 
         public YaraService(string[] args)
         {
@@ -76,11 +71,21 @@ namespace WindowsYaraService
 
             eventLog1.WriteEntry("In OnStart.");
 
-            // Set up a timer that triggers every minute.
-            Timer timer = new Timer();
-            timer.Interval = 60000; // 60 seconds
-            timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
-            timer.Start();
+            // initialize watchers
+            DriveInfo[] drives = DriveInfo.GetDrives();
+            for (int i = 0; i < drives.Length; i++)
+            {
+                FileSystemWatcher fileSystemWatcher = new FileSystemWatcher();
+
+                // Associate event handlers with the events
+                fileSystemWatcher.Created += FileSystemWatcher_Created;
+                fileSystemWatcher.Changed += FileSystemWatcher_Changed;
+
+                // Tell watcher where to look
+                fileSystemWatcher.Path = drives[i].Name;
+                fileSystemWatcher.EnableRaisingEvents = true;
+                mFileSystemWatchers.Add(fileSystemWatcher);
+            }
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
@@ -107,10 +112,16 @@ namespace WindowsYaraService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        public void OnTimer(object sender, ElapsedEventArgs args)
+        private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            // TODO: Insert monitoring activities here.
-            eventLog1.WriteEntry("Monitoring the System", EventLogEntryType.Information, eventId++);
+            // TODO: Add to log + notification
+            eventLog1.WriteEntry($"A new file has been changed - {e.Name}");
+        }
+
+        private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
+        {
+            // TODO: Add to log + notification
+            eventLog1.WriteEntry($"A new file has been created - {e.Name}");
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
