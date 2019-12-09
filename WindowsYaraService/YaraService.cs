@@ -33,6 +33,7 @@ namespace WindowsYaraService
     public partial class YaraService : ServiceBase
     {
         private List<FileSystemWatcher> mFileSystemWatchers = new List<FileSystemWatcher>();
+        private YaraScanner mYaraScanner = new YaraScanner();
 
         public YaraService(string[] args)
         {
@@ -114,13 +115,11 @@ namespace WindowsYaraService
 
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            // TODO: Add to log + notification
             eventLog1.WriteEntry($"A new file has been changed - {e.Name}");
         }
 
         private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
         {
-            // TODO: Add to log + notification
             eventLog1.WriteEntry($"A new file has been created - {e.Name}");
         }
 
