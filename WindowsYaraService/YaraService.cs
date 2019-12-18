@@ -33,7 +33,7 @@ namespace WindowsYaraService
     public partial class YaraService : ServiceBase
     {
         private List<FileSystemWatcher> mFileSystemWatchers = new List<FileSystemWatcher>();
-        private YaraScanner mYaraScanner = new YaraScanner();
+        private YaraScanner mYaraScanner = new YaraScanner("D:/Master/My_Dizertation/Project/rules");
 
         public YaraService(string[] args)
         {
@@ -85,6 +85,8 @@ namespace WindowsYaraService
                 // Tell watcher where to look
                 fileSystemWatcher.Path = drives[i].Name;
                 fileSystemWatcher.EnableRaisingEvents = true;
+                fileSystemWatcher.IncludeSubdirectories = true;
+                fileSystemWatcher.NotifyFilter = NotifyFilters.FileName;
                 mFileSystemWatchers.Add(fileSystemWatcher);
             }
 
@@ -116,11 +118,13 @@ namespace WindowsYaraService
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
             eventLog1.WriteEntry($"A new file has been changed - {e.Name}");
+            mYaraScanner.scanFile(e.FullPath);
         }
 
         private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
         {
             eventLog1.WriteEntry($"A new file has been created - {e.Name}");
+            mYaraScanner.scanFile(e.FullPath);
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]

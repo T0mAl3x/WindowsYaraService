@@ -48,8 +48,8 @@ namespace WindowsYaraService
             // 
             // serviceInstaller1
             // 
-            this.serviceInstaller1.Description = "A sample service";
-            this.serviceInstaller1.DisplayName = "YaraService Display Name";
+            this.serviceInstaller1.Description = "Yara Scanner";
+            this.serviceInstaller1.DisplayName = "WindowsYaraService";
             this.serviceInstaller1.ServiceName = "YaraService";
             this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             // 
