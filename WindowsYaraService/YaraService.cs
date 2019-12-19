@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
-using System.ServiceProcess;
-using System.Timers;
+﻿using System.ServiceProcess;
 using System.Runtime.InteropServices;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading;
+using System.Linq;
+using YaraSharp;
+using System;
 
 namespace WindowsYaraService
 {
@@ -30,27 +32,17 @@ namespace WindowsYaraService
         public int dwWaitHint;
     };
 
-    public partial class YaraService : ServiceBase
+    public partial class YaraService : ServiceBase, Detector.Listener
     {
-        private List<FileSystemWatcher> mFileSystemWatchers = new List<FileSystemWatcher>();
-        private YaraScanner mYaraScanner = new YaraScanner("D:/Master/My_Dizertation/Project/rules");
+        private Detector mDetector;
+        private Scanner mScanner;
 
-        public YaraService(string[] args)
+        public YaraService()
         {
             InitializeComponent();
 
             string eventSourceName = "MySource";
             string logName = "MyNewLog";
-
-            if (args.Length > 0)
-            {
-                eventSourceName = args[0];
-            }
-
-            if (args.Length > 1)
-            {
-                logName = args[1];
-            }
 
             eventLog1 = new System.Diagnostics.EventLog();
             if (!System.Diagnostics.EventLog.SourceExists("MySource"))
@@ -60,6 +52,13 @@ namespace WindowsYaraService
             }
             eventLog1.Source = eventSourceName;
             eventLog1.Log = logName;
+
+            // Initialise Detector
+            mDetector = new Detector();
+            mDetector.RegisterListener(this);
+
+            // Initialise Scanner
+            mScanner = new Scanner(@"D:\Master\My_Dizertation\Project\rules");
         }
 
         protected override void OnStart(string[] args)
@@ -72,32 +71,9 @@ namespace WindowsYaraService
 
             eventLog1.WriteEntry("In OnStart.");
 
-            // initialize watchers
-            DriveInfo[] drives = DriveInfo.GetDrives();
-            for (int i = 0; i < drives.Length; i++)
-            {
-                FileSystemWatcher fileSystemWatcher = new FileSystemWatcher();
-
-                // Associate event handlers with the events
-                fileSystemWatcher.Created += FileSystemWatcher_Created;
-                fileSystemWatcher.Changed += FileSystemWatcher_Changed;
-
-                // Tell watcher where to look
-                fileSystemWatcher.Path = drives[i].Name;
-                fileSystemWatcher.EnableRaisingEvents = true;
-                fileSystemWatcher.IncludeSubdirectories = true;
-                fileSystemWatcher.NotifyFilter = NotifyFilters.FileName;
-                mFileSystemWatchers.Add(fileSystemWatcher);
-            }
-
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
-        }
-
-        protected override void OnContinue()
-        {
-            eventLog1.WriteEntry("In OnContinue.");
         }
 
         protected override void OnStop()
@@ -115,16 +91,15 @@ namespace WindowsYaraService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
         }
 
-        private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
+        // Detector Listener
+        public void onFileCreated(string filePath)
         {
-            eventLog1.WriteEntry($"A new file has been changed - {e.Name}");
-            mYaraScanner.scanFile(e.FullPath);
+            // TODO: Notify Scheduler
         }
 
-        private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
+        public void onFileChanged(string filePath)
         {
-            eventLog1.WriteEntry($"A new file has been created - {e.Name}");
-            mYaraScanner.scanFile(e.FullPath);
+            // TODO: Notify Scheduler
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
