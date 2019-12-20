@@ -8,6 +8,11 @@ namespace WindowsYaraService.Base.Jobs
 {
     abstract class Job
     {
-        protected string mFilePath;
+        public string mFilePath { get; }
+
+        public Job(string filePath)
+        {
+            mFilePath = filePath;
+        }
     }
 }

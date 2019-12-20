@@ -1,11 +1,8 @@
 ﻿using System.ServiceProcess;
 using System.Runtime.InteropServices;
-using System.IO;
-using System.Collections.Generic;
+using WindowsYaraService.Modules;
 using System.Threading;
-using System.Linq;
-using YaraSharp;
-using System;
+using WindowsYaraService.Base.Jobs;
 
 namespace WindowsYaraService
 {
@@ -36,6 +33,9 @@ namespace WindowsYaraService
     {
         private Detector mDetector;
         private Scanner mScanner;
+        private Scheduler mScheduler;
+
+        private Thread mJobFetcher;
 
         public YaraService()
         {
@@ -59,6 +59,9 @@ namespace WindowsYaraService
 
             // Initialise Scanner
             mScanner = new Scanner(@"D:\Master\My_Dizertation\Project\rules");
+
+            // Initialise Scheduler
+            mScheduler = new Scheduler();
         }
 
         protected override void OnStart(string[] args)
@@ -70,6 +73,24 @@ namespace WindowsYaraService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
             eventLog1.WriteEntry("In OnStart.");
+
+            // Fetch jobs from scheduler
+            //mJobFetcher = new Thread(new ThreadStart(() =>
+            //{
+            //    while (true)
+            //    {
+            //        Thread.Sleep(1000);
+            //        var filePath = mScheduler.FetchJobForScanning();
+            //        if (filePath == null)
+            //        {
+            //            continue;
+            //        }
+
+            //        var scanJob = new ScanJob(filePath);
+            //        mScanner.scanFile(scanJob);
+            //    }
+            //}));
+            //mJobFetcher.Start();
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
@@ -94,12 +115,12 @@ namespace WindowsYaraService
         // Detector Listener
         public void onFileCreated(string filePath)
         {
-            // TODO: Notify Scheduler
+            mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
         }
 
         public void onFileChanged(string filePath)
         {
-            // TODO: Notify Scheduler
+            mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]

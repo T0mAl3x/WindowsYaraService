@@ -3,12 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using WindowsYaraService.Base;
+using WindowsYaraService.Base.Jobs;
 using YaraSharp;
+using static WindowsYaraService.Modules.Scanner;
 
-namespace WindowsYaraService
+namespace WindowsYaraService.Modules
 {
-    class Scanner
+    class Scanner : BaseObservable<Listener>
     {
+        internal interface Listener
+        {
+            void onFileScanned(string report);
+        }
+
         private YSInstance YSInstance = new YSInstance();
         private YSContext YSContext = new YSContext();
         private YSRules YSRules;
@@ -24,13 +32,13 @@ namespace WindowsYaraService
             YSRules = YSCompiler.GetRules();
         }
 
-        public void scanFile(string filePath)
+        public void scanFile(ScanJob scanJob)
         {
             ThreadPool.QueueUserWorkItem((i) =>
             {
                 try
                 {
-                    string Filename = filePath.Replace("\\", "/");
+                    string Filename = scanJob.mFilePath.Replace("\\", "/");
 
                     //  Get matches
                     List<YSMatches> Matches = YSInstance.ScanFile(Filename, YSRules, null, 0);
@@ -55,6 +63,12 @@ namespace WindowsYaraService
                     File.AppendAllText(@"D:\Master\My_Dizertation\ERRORS.txt", e.Message + Environment.NewLine);
                 }
             });
+        }
+
+        ~Scanner()
+        {
+            YSRules.Destroy();
+            YSContext.Destroy();
         }
     }
 }

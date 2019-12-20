@@ -4,10 +4,11 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WindowsYaraService.Base;
 
-namespace WindowsYaraService
+namespace WindowsYaraService.Modules
 {
-    class Detector : Base.BaseObservable<Detector.Listener>
+    class Detector : BaseObservable<Detector.Listener>
     {
         internal interface Listener
         {
