@@ -14,6 +14,7 @@
     <Deterministic>true</Deterministic>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -60,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Base\BaseObservable.cs" />
+    <Compile Include="Base\FetchSignal.cs" />
     <Compile Include="Base\JobFactory.cs" />
     <Compile Include="Base\Jobs\common\BaseObservableJob.cs" />
     <Compile Include="Base\Jobs\common\Job.cs" />

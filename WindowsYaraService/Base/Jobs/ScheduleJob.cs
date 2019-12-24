@@ -61,10 +61,10 @@ namespace WindowsYaraService.Base.Jobs
                         mPriority = Priorities.SMALL;
                         break;
                     case long n when (n >= 50000000 && n < 200000000):
-                        mPriority = Priorities.SMALL;
+                        mPriority = Priorities.MEDIUM;
                         break;
                     case long n when (n >= 200000000):
-                        mPriority = Priorities.SMALL;
+                        mPriority = Priorities.BIG;
                         break;
                 }
 
@@ -87,14 +87,16 @@ namespace WindowsYaraService.Base.Jobs
             {
                 stream = file.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
             }
+            catch(FileNotFoundException exception)
+            {
+                throw exception;
+            }
             catch (IOException exception)
             {
                 //the file is unavailable because it is:
                 //still being written to
                 //or being processed by another thread
                 //or does not exist (has already been processed)
-                if (exception.InnerException is FileNotFoundException)
-                    throw exception;
                 return false;
             }
             finally

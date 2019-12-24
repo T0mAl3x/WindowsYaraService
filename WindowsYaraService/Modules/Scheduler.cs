@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WindowsYaraService.Base;
 using WindowsYaraService.Base.Jobs;
 using static WindowsYaraService.Base.Jobs.ScheduleJob;
 
@@ -33,20 +34,20 @@ namespace WindowsYaraService.Modules
                     var job = mSmallJobs.First();
                     mSmallJobs.RemoveAt(0);
                     SmallCounter--;
-                    if (SmallCounter == 0)
-                        SmallCounter = 5;
+                    if (SmallCounter < 0)
+                        SmallCounter = 0;
                     return job.mFilePath;
                 }
             }
-            if (mMediumJobs.Count != 0 && MediumCounter != 0)
+            if (mMediumJobs.Count != 0)
             {
                 if (MediumCounter != 0 || mBigJobs.Count == 0)
                 {
                     var job = mMediumJobs.First();
                     mMediumJobs.RemoveAt(0);
                     MediumCounter--;
-                    if (MediumCounter == 0)
-                        MediumCounter = 3;
+                    if (MediumCounter < 0)
+                        MediumCounter = 0;
                     return job.mFilePath;
                 }
             }
@@ -87,6 +88,8 @@ namespace WindowsYaraService.Modules
                     }
                     break;
             }
+
+            FetchSignal.waitHandle.Set();
         }
     }
 }

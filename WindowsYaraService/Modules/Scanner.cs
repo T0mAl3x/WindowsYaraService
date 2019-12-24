@@ -44,23 +44,23 @@ namespace WindowsYaraService.Modules
                     List<YSMatches> Matches = YSInstance.ScanFile(Filename, YSRules, null, 0);
 
                     //  Iterate over matches
-                    File.AppendAllText(@"D:\Master\My_Dizertation\test.txt", "*************************** -> " + Filename + Environment.NewLine);
+                    File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", "*************************** -> " + Filename + Environment.NewLine);
                     if (Matches.Count == 0)
                     {
-                        File.AppendAllText(@"D:\Master\My_Dizertation\test.txt", "No matches found for " + Filename + Environment.NewLine);
+                        File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", "No matches found for " + Filename + Environment.NewLine);
                     }
                     else
                     {
                         foreach (YSMatches match in Matches)
                         {
-                            File.AppendAllText(@"D:\Master\My_Dizertation\test.txt", match.Rule.Identifier + Environment.NewLine);
+                            File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", match.Rule.Identifier + Environment.NewLine);
                         }
                     }
-                    File.AppendAllText(@"D:\Master\My_Dizertation\test.txt", "***************************" + Environment.NewLine);
+                    File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", "***************************" + Environment.NewLine);
                 }
                 catch(Exception e)
                 {
-                    File.AppendAllText(@"D:\Master\My_Dizertation\ERRORS.txt", e.Message + Environment.NewLine);
+                    File.AppendAllText(@"C:\Users\IEUser\Documents\Work\ERRORS.txt", e.Message + Environment.NewLine);
                 }
             });
         }

@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using WindowsYaraService.Modules;
 using System.Threading;
 using WindowsYaraService.Base.Jobs;
+using WindowsYaraService.Base;
 
 namespace WindowsYaraService
 {
@@ -58,7 +59,7 @@ namespace WindowsYaraService
             mDetector.RegisterListener(this);
 
             // Initialise Scanner
-            mScanner = new Scanner(@"D:\Master\My_Dizertation\Project\rules");
+            mScanner = new Scanner("C:/Users/IEUser/Documents/Work/rules");
 
             // Initialise Scheduler
             mScheduler = new Scheduler();
@@ -75,22 +76,22 @@ namespace WindowsYaraService
             eventLog1.WriteEntry("In OnStart.");
 
             // Fetch jobs from scheduler
-            //mJobFetcher = new Thread(new ThreadStart(() =>
-            //{
-            //    while (true)
-            //    {
-            //        Thread.Sleep(1000);
-            //        var filePath = mScheduler.FetchJobForScanning();
-            //        if (filePath == null)
-            //        {
-            //            continue;
-            //        }
+            mJobFetcher = new Thread(new ThreadStart(() =>
+            {
+                while (true)
+                {
+                    var filePath = mScheduler.FetchJobForScanning();
+                    if (filePath == null)
+                    {
+                        FetchSignal.waitHandle.WaitOne();
+                        continue;
+                    }
 
-            //        var scanJob = new ScanJob(filePath);
-            //        mScanner.scanFile(scanJob);
-            //    }
-            //}));
-            //mJobFetcher.Start();
+                    var scanJob = new ScanJob(filePath);
+                    mScanner.scanFile(scanJob);
+                }
+            }));
+            mJobFetcher.Start();
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
