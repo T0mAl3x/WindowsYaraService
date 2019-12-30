@@ -6,11 +6,11 @@ using System.Threading;
 using WindowsYaraService.Base;
 using WindowsYaraService.Base.Jobs;
 using YaraSharp;
-using static WindowsYaraService.Modules.Scanner;
+using static WindowsYaraService.Modules.YaraScanner;
 
 namespace WindowsYaraService.Modules
 {
-    class Scanner : BaseObservable<Listener>
+    class YaraScanner : BaseObservable<Listener>
     {
         internal interface Listener
         {
@@ -21,7 +21,7 @@ namespace WindowsYaraService.Modules
         private YSContext YSContext = new YSContext();
         private YSRules YSRules;
 
-        public Scanner(string rulesPath)
+        public YaraScanner(string rulesPath)
         {
             List<string> mRuleFilenames = Directory.GetFiles(rulesPath, "*.yar", System.IO.SearchOption.AllDirectories).ToList();
             for (int index = 0; index < mRuleFilenames.Count; index++)
@@ -32,7 +32,7 @@ namespace WindowsYaraService.Modules
             YSRules = YSCompiler.GetRules();
         }
 
-        public void scanFile(ScanJob scanJob)
+        public void ScanFile(ScanJob scanJob)
         {
             ThreadPool.QueueUserWorkItem((i) =>
             {
@@ -65,7 +65,7 @@ namespace WindowsYaraService.Modules
             });
         }
 
-        ~Scanner()
+        ~YaraScanner()
         {
             YSRules.Destroy();
             YSContext.Destroy();

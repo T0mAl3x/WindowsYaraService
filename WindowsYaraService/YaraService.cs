@@ -33,7 +33,8 @@ namespace WindowsYaraService
     public partial class YaraService : ServiceBase, Detector.Listener
     {
         private Detector mDetector;
-        private Scanner mScanner;
+        private YaraScanner mScanner;
+        private VirusTotalScanner mVirusTotalScanner;
         private Scheduler mScheduler;
 
         private Thread mJobFetcher;
@@ -58,8 +59,9 @@ namespace WindowsYaraService
             mDetector = new Detector();
             mDetector.RegisterListener(this);
 
-            // Initialise Scanner
-            mScanner = new Scanner("C:/Users/IEUser/Documents/Work/rules");
+            // Initialise Scanners
+            mScanner = new YaraScanner("C:/Users/IEUser/Documents/Work/rules");
+            mVirusTotalScanner = new VirusTotalScanner();
 
             // Initialise Scheduler
             mScheduler = new Scheduler();
@@ -88,7 +90,8 @@ namespace WindowsYaraService
                     }
 
                     var scanJob = new ScanJob(filePath);
-                    mScanner.scanFile(scanJob);
+                    //mScanner.ScanFile(scanJob);
+                    mVirusTotalScanner.ScanFile(scanJob);
                 }
             }));
             mJobFetcher.Start();
