@@ -9,7 +9,7 @@ using static WindowsYaraService.Base.Jobs.ScheduleJob;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    class ScheduleJob : BaseObservableJob<Listener>
+    class ScheduleJob : BaseObservableJob<IListener>
     {
         internal enum Priorities
         {
@@ -18,7 +18,7 @@ namespace WindowsYaraService.Base.Jobs
             BIG
         }
 
-        internal interface Listener
+        internal interface IListener
         {
             void OnJobReady(ScheduleJob job);
         }
@@ -68,7 +68,7 @@ namespace WindowsYaraService.Base.Jobs
                         break;
                 }
 
-                foreach (Listener listener in job.mListeners)
+                foreach (IListener listener in job.GetListeners())
                 {
                     listener.OnJobReady(job);
                 }

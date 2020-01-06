@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -12,13 +13,8 @@ using static WindowsYaraService.Modules.YaraScanner;
 
 namespace WindowsYaraService.Modules
 {
-    class YaraScanner : BaseObservable<Listener>
+    class YaraScanner
     {
-        internal interface Listener
-        {
-            void onFileScanned(string report);
-        }
-
         private YSInstance YSInstance = new YSInstance();
         private YSContext YSContext = new YSContext();
         private YSRules YSRules;
@@ -45,23 +41,19 @@ namespace WindowsYaraService.Modules
                 List<YSMatches> Matches = YSInstance.ScanFile(Filename, YSRules, null, 0);
 
                 //  Iterate over matches
-                File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", "*************************** -> " + Filename + Environment.NewLine);
-                if (Matches.Count == 0)
-                {
-                    File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", "No matches found for " + Filename + Environment.NewLine);
-                }
-                else
+                if (Matches.Count != 0)
                 {
                     foreach (YSMatches match in Matches)
                     {
-                        File.AppendAllText(@"C:\Users\IEUser\Documents\Work\test.txt", match.Rule.Identifier + Environment.NewLine);
+                        var yaraResult = new YaraResult();
+                        yaraResult.Identifier = match.Rule.Identifier;
+                        yaraResult.Meta = match.Rule.Meta;
+                        yaraResults.Add(yaraResult);
                     }
-                    
                 }
             }
             catch (Exception e)
             {
-                File.AppendAllText(@"C:\Users\IEUser\Documents\Work\ERRORS.txt", e.Message + Environment.NewLine);
                 return null;
             }
             return yaraResults;

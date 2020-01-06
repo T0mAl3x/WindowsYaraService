@@ -4,13 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WindowsYaraService.Base;
 using WindowsYaraService.Base.Jobs;
 using WindowsYaraService.Modules.Scanner.Models;
 
 namespace WindowsYaraService.Modules.Scanner
 {
-    public class ScanManager
+    class ScanManager : BaseObservable<ScanManager.IListener>
     {
+        internal interface IListener
+        {
+            void OnFileScanned(InfoModel report);
+        }
+
         private readonly YaraScanner YaraScanner;
         private readonly VirusTotalScanner VirusTotalScanner;
 
@@ -26,8 +32,14 @@ namespace WindowsYaraService.Modules.Scanner
             {
                 var scanJob = new ScanJob(filePath);
                 Task<InfoModel> infoModel = VirusTotalScanner.ScanFile(scanJob);
-                List<YaraResult> yaraResults = YaraScanner.ScanFile(scanJob);
+                //List<YaraResult> yaraResults = YaraScanner.ScanFile(scanJob);
                 InfoModel model = await infoModel;
+                //model.YaraResults = yaraResults;
+
+                //foreach (IListener listener in GetListeners())
+                //{
+                //    listener.OnFileScanned(model);
+                //}
             });
         }
     }

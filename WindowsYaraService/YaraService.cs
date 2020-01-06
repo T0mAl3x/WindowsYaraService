@@ -4,6 +4,7 @@ using WindowsYaraService.Modules;
 using System.Threading;
 using WindowsYaraService.Base.Jobs;
 using WindowsYaraService.Base;
+using WindowsYaraService.Modules.Scanner;
 
 namespace WindowsYaraService
 {
@@ -33,7 +34,7 @@ namespace WindowsYaraService
     public partial class YaraService : ServiceBase, Detector.Listener
     {
         private Detector mDetector;
-        
+        private ScanManager mScanManager;
         private Scheduler mScheduler;
 
         private Thread mJobFetcher;
@@ -60,6 +61,9 @@ namespace WindowsYaraService
 
             // Initialise Scheduler
             mScheduler = new Scheduler();
+
+            // Initialise Scanner
+            mScanManager = new ScanManager("D:/Master/My_Dizertation/Project/rules");
         }
 
         protected override void OnStart(string[] args)
@@ -84,8 +88,7 @@ namespace WindowsYaraService
                         continue;
                     }
 
-                    var scanJob = new ScanJob(filePath);
-                    //mScanner.ScanFile(scanJob);
+                    mScanManager.ScanFile(filePath);
                     
                 }
             }));

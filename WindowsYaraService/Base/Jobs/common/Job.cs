@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    abstract class Job
+    public abstract class Job
     {
         public string mFilePath { get; }
 

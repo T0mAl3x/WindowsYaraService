@@ -10,7 +10,7 @@ using static WindowsYaraService.Base.Jobs.ScheduleJob;
 
 namespace WindowsYaraService.Modules
 {
-    class Scheduler : Listener
+    class Scheduler : IListener
     {
         private readonly SynchronizedCollection<ScheduleJob> mSmallJobs = new SynchronizedCollection<ScheduleJob>();
         private readonly SynchronizedCollection<ScheduleJob> mMediumJobs = new SynchronizedCollection<ScheduleJob>();

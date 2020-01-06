@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -25,45 +26,49 @@ namespace WindowsYaraService.Modules
         public async Task<InfoModel> ScanFile(ScanJob scanJob)
         {
             //Create the EICAR test virus. See http://www.eicar.org/86-0-Intended-use.html
-            byte[] eicar = Encoding.ASCII.GetBytes(@"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*");
-
-            //Check if the file has been scanned before.
-            FileReport fileReport = await mVirusTotal.GetFileReportAsync(eicar);
-
-            bool hasFileBeenScannedBefore = fileReport.ResponseCode == FileReportResponseCode.Present;
-
-            Console.WriteLine("File has been scanned before: " + (hasFileBeenScannedBefore ? "Yes" : "No"));
+            //byte[] eicar = Encoding.ASCII.GetBytes(@"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*");
 
             //If the file has been scanned before, the results are embedded inside the report.
-            if (hasFileBeenScannedBefore)
+            //if (hasFileBeenScannedBefore)
+            //{
+            //    PrintScan(fileReport);
+            //}
+            //else
+            //{
+            ScanResult fileResult;
+            if (scanJob.GetSize() < 33553369)
             {
-                PrintScan(fileReport);
+                byte[] file = File.ReadAllBytes(scanJob.mFilePath);
+                fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
             }
             else
             {
-                ScanResult fileResult = await mVirusTotal.ScanFileAsync(eicar, "EICAR.txt");
-                PrintScan(fileResult);
+                fileResult = await mVirusTotal.ScanLargeFileAsync(scanJob.mFilePath);
             }
+            
+            FileReport fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
+            //    PrintScan(fileResult);
+            //}
 
-            Console.WriteLine();
+            //Console.WriteLine();
 
-            string scanUrl = "http://www.google.com/";
+            //string scanUrl = "http://www.google.com/";
 
-            UrlReport urlReport = await mVirusTotal.GetUrlReportAsync(scanUrl);
+            //UrlReport urlReport = await mVirusTotal.GetUrlReportAsync(scanUrl);
 
-            bool hasUrlBeenScannedBefore = urlReport.ResponseCode == UrlReportResponseCode.Present;
-            Console.WriteLine("URL has been scanned before: " + (hasUrlBeenScannedBefore ? "Yes" : "No"));
+            //bool hasUrlBeenScannedBefore = urlReport.ResponseCode == UrlReportResponseCode.Present;
+            //Console.WriteLine("URL has been scanned before: " + (hasUrlBeenScannedBefore ? "Yes" : "No"));
 
-            //If the url has been scanned before, the results are embedded inside the report.
-            if (hasUrlBeenScannedBefore)
-            {
-                PrintScan(urlReport);
-            }
-            else
-            {
-                UrlScanResult urlResult = await mVirusTotal.ScanUrlAsync(scanUrl);
-                PrintScan(urlResult);
-            }
+            ////If the url has been scanned before, the results are embedded inside the report.
+            //if (hasUrlBeenScannedBefore)
+            //{
+            //    PrintScan(urlReport);
+            //}
+            //else
+            //{
+            //    UrlScanResult urlResult = await mVirusTotal.ScanUrlAsync(scanUrl);
+            //    PrintScan(urlResult);
+            //}
 
             return new InfoModel();
         }

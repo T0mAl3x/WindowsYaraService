@@ -6,9 +6,11 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Modules.Scanner.Models
 {
-    public class YaraResult
+    public class Scan
     {
-        public Dictionary<string, object> Meta { get; set; }
-        public string Identifier { get; set; }
+        string EngineName { get; set; }
+        bool Detected { get; set; }
+        string Version { get; set; }
+        string Result { get; set; }
     }
 }
