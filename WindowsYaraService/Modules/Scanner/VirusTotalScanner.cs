@@ -9,6 +9,7 @@ using VirusTotalNet.Objects;
 using VirusTotalNet.ResponseCodes;
 using VirusTotalNet.Results;
 using WindowsYaraService.Base.Jobs;
+using WindowsYaraService.Modules.Scanner;
 
 namespace WindowsYaraService.Modules
 {
@@ -21,7 +22,7 @@ namespace WindowsYaraService.Modules
             mVirusTotal.UseTLS = true;
         }
 
-        public async void ScanFile(ScanJob scanJob)
+        public async Task<InfoModel> ScanFile(ScanJob scanJob)
         {
             //Create the EICAR test virus. See http://www.eicar.org/86-0-Intended-use.html
             byte[] eicar = Encoding.ASCII.GetBytes(@"X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*");
@@ -63,6 +64,8 @@ namespace WindowsYaraService.Modules
                 UrlScanResult urlResult = await mVirusTotal.ScanUrlAsync(scanUrl);
                 PrintScan(urlResult);
             }
+
+            return new InfoModel();
         }
 
         private static void PrintScan(UrlScanResult scanResult)

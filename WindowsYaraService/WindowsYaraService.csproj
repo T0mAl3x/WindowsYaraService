@@ -68,22 +68,24 @@
   <ItemGroup>
     <Compile Include="Base\BaseObservable.cs" />
     <Compile Include="Base\FetchSignal.cs" />
-    <Compile Include="Base\JobFactory.cs" />
     <Compile Include="Base\Jobs\common\BaseObservableJob.cs" />
     <Compile Include="Base\Jobs\common\Job.cs" />
     <Compile Include="Base\Jobs\common\ObservableJob.cs" />
     <Compile Include="Base\Jobs\ScanJob.cs" />
     <Compile Include="Base\Jobs\ScheduleJob.cs" />
     <Compile Include="Modules\Detector.cs" />
+    <Compile Include="Modules\Scanner\Models\InfoModel.cs" />
+    <Compile Include="Modules\Scanner\Models\YaraResult.cs" />
+    <Compile Include="Modules\Scanner\ScanManager.cs" />
     <Compile Include="Modules\Scheduler.cs" />
-    <Compile Include="Modules\VirusTotalScanner.cs" />
+    <Compile Include="Modules\Scanner\VirusTotalScanner.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
-    <Compile Include="Modules\YaraScanner.cs" />
+    <Compile Include="Modules\Scanner\YaraScanner.cs" />
     <Compile Include="YaraService.cs">
       <SubType>Component</SubType>
     </Compile>
