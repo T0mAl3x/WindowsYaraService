@@ -37,7 +37,7 @@ namespace WindowsYaraService.Modules
             //else
             //{
             FileReport fileReport;
-            if (scanJob.GetSize() < 33553369)
+            if (scanJob.GetSize() < 33553369 && scanJob.GetSize() > 0)
             {
                 byte[] file = File.ReadAllBytes(scanJob.mFilePath);
                 ScanResult fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
@@ -102,7 +102,7 @@ namespace WindowsYaraService.Modules
                 infoModel = new InfoModel();
                 infoModel.Messages.Add(
                     new Message {
-                        Information = "The file is too large for Virus Total", 
+                        Information = "The file is too large for Virus Total or has 0 bytes", 
                         Type = MessageType.WARNING
                     });
             }

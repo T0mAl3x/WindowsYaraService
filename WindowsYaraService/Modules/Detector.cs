@@ -8,12 +8,12 @@ using WindowsYaraService.Base;
 
 namespace WindowsYaraService.Modules
 {
-    class Detector : BaseObservable<Detector.Listener>
+    class Detector : BaseObservable<Detector.IListener>
     {
-        internal interface Listener
+        internal interface IListener
         {
-            void onFileCreated(string filePath);
-            void onFileChanged(string filePath);
+            void OnFileCreated(string filePath);
+            void OnFileChanged(string filePath);
         }
 
         private List<FileSystemWatcher> mFileSystemWatchers = new List<FileSystemWatcher>();
@@ -41,17 +41,17 @@ namespace WindowsYaraService.Modules
 
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            foreach (Listener listener in GetListeners())
+            foreach (IListener listener in GetListeners())
             {
-                listener.onFileChanged(e.FullPath);
+                listener.OnFileChanged(e.FullPath);
             }
         }
 
         private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
         {
-            foreach (Listener listener in GetListeners())
+            foreach (IListener listener in GetListeners())
             {
-                listener.onFileCreated(e.FullPath);
+                listener.OnFileCreated(e.FullPath);
             }
         }
     }

@@ -31,7 +31,7 @@ namespace WindowsYaraService
         public int dwWaitHint;
     };
 
-    public partial class YaraService : ServiceBase, Detector.Listener
+    public partial class YaraService : ServiceBase, Detector.IListener, ScanManager.IListener
     {
         private Detector mDetector;
         private ScanManager mScanManager;
@@ -115,14 +115,20 @@ namespace WindowsYaraService
         }
 
         // Detector Listener
-        public void onFileCreated(string filePath)
+        public void OnFileCreated(string filePath)
         {
             mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
         }
 
-        public void onFileChanged(string filePath)
+        public void OnFileChanged(string filePath)
         {
             mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
+        }
+
+        // Scanner Listener
+        public void OnFileScanned(InfoModel report)
+        {
+            
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]
