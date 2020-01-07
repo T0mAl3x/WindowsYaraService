@@ -32,9 +32,20 @@ namespace WindowsYaraService.Modules.Scanner
             {
                 var scanJob = new ScanJob(filePath);
                 Task<InfoModel> infoModel = VirusTotalScanner.ScanFile(scanJob);
-                //List<YaraResult> yaraResults = YaraScanner.ScanFile(scanJob);
+                //List<YaraResult> yaraResults = null;
+                //Message scanMessage = null;
+                //try
+                //{
+                //    yaraResults = YaraScanner.ScanFile(scanJob);
+                //}
+                //catch(Exception e)
+                //{
+                //    scanMessage = new Message { Information = e.Message, Type = MessageType.ERROR };
+                //}
                 InfoModel model = await infoModel;
                 //model.YaraResults = yaraResults;
+                //if (scanMessage != null)
+                //    model.Messages.Add(scanMessage);
 
                 //foreach (IListener listener in GetListeners())
                 //{

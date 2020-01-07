@@ -8,9 +8,9 @@ namespace WindowsYaraService.Modules.Scanner.Models
 {
     public class Scan
     {
-        string EngineName { get; set; }
-        bool Detected { get; set; }
-        string Version { get; set; }
-        string Result { get; set; }
+        public string EngineName { get; set; }
+        public bool Detected { get; set; }
+        public string Version { get; set; }
+        public string Result { get; set; }
     }
 }

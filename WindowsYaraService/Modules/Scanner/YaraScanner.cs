@@ -54,7 +54,7 @@ namespace WindowsYaraService.Modules
             }
             catch (Exception e)
             {
-                return null;
+                throw e;
             }
             return yaraResults;
         }

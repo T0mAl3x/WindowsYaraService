@@ -75,6 +75,8 @@
     <Compile Include="Base\Jobs\ScheduleJob.cs" />
     <Compile Include="Modules\Detector.cs" />
     <Compile Include="Modules\Scanner\Models\InfoModel.cs" />
+    <Compile Include="Modules\Scanner\Models\Message.cs" />
+    <Compile Include="Modules\Scanner\Models\MessageType.cs" />
     <Compile Include="Modules\Scanner\Models\Scan.cs" />
     <Compile Include="Modules\Scanner\Models\YaraResult.cs" />
     <Compile Include="Modules\Scanner\ScanManager.cs" />

@@ -11,6 +11,7 @@ using VirusTotalNet.ResponseCodes;
 using VirusTotalNet.Results;
 using WindowsYaraService.Base.Jobs;
 using WindowsYaraService.Modules.Scanner;
+using WindowsYaraService.Modules.Scanner.Models;
 
 namespace WindowsYaraService.Modules
 {
@@ -35,18 +36,18 @@ namespace WindowsYaraService.Modules
             //}
             //else
             //{
-            ScanResult fileResult;
+            FileReport fileReport;
             if (scanJob.GetSize() < 33553369)
             {
                 byte[] file = File.ReadAllBytes(scanJob.mFilePath);
-                fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
+                ScanResult fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
+                fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
             }
             else
             {
-                fileResult = await mVirusTotal.ScanLargeFileAsync(scanJob.mFilePath);
+                fileReport = null;
             }
-            
-            FileReport fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
+
             //    PrintScan(fileResult);
             //}
 
@@ -69,48 +70,83 @@ namespace WindowsYaraService.Modules
             //    UrlScanResult urlResult = await mVirusTotal.ScanUrlAsync(scanUrl);
             //    PrintScan(urlResult);
             //}
-
-            return new InfoModel();
-        }
-
-        private static void PrintScan(UrlScanResult scanResult)
-        {
-            EventLog.WriteEntry("Application", "Scan ID: " + scanResult.ScanId, EventLogEntryType.Information);
-            EventLog.WriteEntry("Application", "Message: " + scanResult.VerboseMsg, EventLogEntryType.Information);
-        }
-
-        private static void PrintScan(ScanResult scanResult)
-        {
-            EventLog.WriteEntry("Application", "Scan ID: " + scanResult.ScanId, EventLogEntryType.Information);
-            EventLog.WriteEntry("Application", "Message: " + scanResult.VerboseMsg, EventLogEntryType.Information);
-        }
-
-        private static void PrintScan(FileReport fileReport)
-        {
-            EventLog.WriteEntry("Application", "Scan ID: " + fileReport.ScanId, EventLogEntryType.Information);
-            EventLog.WriteEntry("Application", "Message: " + fileReport.VerboseMsg, EventLogEntryType.Information);
-
-            if (fileReport.ResponseCode == FileReportResponseCode.Present)
+            InfoModel infoModel;
+            if (fileReport != null)
             {
+                infoModel = new InfoModel
+                {
+                    ScandId = fileReport.ScanId,
+                    Date = fileReport.ScanDate,
+                    SHA1 = fileReport.SHA1,
+                    SHA256 = fileReport.SHA256,
+                    FilePath = scanJob.mFilePath,
+                    TerminalId = "1",
+                    Positives = fileReport.Positives,
+                    Total = fileReport.Total
+                };
+                List<Scan> Scans = new List<Scan>();
                 foreach (KeyValuePair<string, ScanEngine> scan in fileReport.Scans)
                 {
-                    EventLog.WriteEntry("Application", scan.Key + " Detected: " + scan.Value.Detected, EventLogEntryType.Information);
+                    var scanModel = new Scan
+                    {
+                        EngineName = scan.Key,
+                        Detected = scan.Value.Detected,
+                        Version = scan.Value.Version,
+                        Result = scan.Value.Result
+                    };
+                    Scans.Add(scanModel);
                 }
             }
-        }
-
-        private static void PrintScan(UrlReport urlReport)
-        {
-            EventLog.WriteEntry("Application", "Scan ID: " + urlReport.ScanId, EventLogEntryType.Information);
-            EventLog.WriteEntry("Application", "Message: " + urlReport.VerboseMsg, EventLogEntryType.Information);
-
-            if (urlReport.ResponseCode == UrlReportResponseCode.Present)
+            else
             {
-                foreach (KeyValuePair<string, UrlScanEngine> scan in urlReport.Scans)
-                {
-                    EventLog.WriteEntry("Application", scan.Key + " Detected: " + scan.Value.Detected, EventLogEntryType.Information);
-                }
+                infoModel = new InfoModel();
+                infoModel.Messages.Add(
+                    new Message {
+                        Information = "The file is too large for Virus Total", 
+                        Type = MessageType.WARNING
+                    });
             }
+            return infoModel;
         }
+
+        //private static void PrintScan(UrlScanResult scanResult)
+        //{
+        //    EventLog.WriteEntry("Application", "Scan ID: " + scanResult.ScanId, EventLogEntryType.Information);
+        //    EventLog.WriteEntry("Application", "Message: " + scanResult.VerboseMsg, EventLogEntryType.Information);
+        //}
+
+        //private static void PrintScan(ScanResult scanResult)
+        //{
+        //    EventLog.WriteEntry("Application", "Scan ID: " + scanResult.ScanId, EventLogEntryType.Information);
+        //    EventLog.WriteEntry("Application", "Message: " + scanResult.VerboseMsg, EventLogEntryType.Information);
+        //}
+
+        //private static void PrintScan(FileReport fileReport)
+        //{
+        //    EventLog.WriteEntry("Application", "Scan ID: " + fileReport.ScanId, EventLogEntryType.Information);
+        //    EventLog.WriteEntry("Application", "Message: " + fileReport.VerboseMsg, EventLogEntryType.Information);
+
+        //    if (fileReport.ResponseCode == FileReportResponseCode.Present)
+        //    {
+        //        foreach (KeyValuePair<string, ScanEngine> scan in fileReport.Scans)
+        //        {
+        //            EventLog.WriteEntry("Application", scan.Key + " Detected: " + scan.Value.Detected, EventLogEntryType.Information);
+        //        }
+        //    }
+        //}
+
+        //private static void PrintScan(UrlReport urlReport)
+        //{
+        //    EventLog.WriteEntry("Application", "Scan ID: " + urlReport.ScanId, EventLogEntryType.Information);
+        //    EventLog.WriteEntry("Application", "Message: " + urlReport.VerboseMsg, EventLogEntryType.Information);
+
+        //    if (urlReport.ResponseCode == UrlReportResponseCode.Present)
+        //    {
+        //        foreach (KeyValuePair<string, UrlScanEngine> scan in urlReport.Scans)
+        //        {
+        //            EventLog.WriteEntry("Application", scan.Key + " Detected: " + scan.Value.Detected, EventLogEntryType.Information);
+        //        }
+        //    }
+        //}
     }
 }
