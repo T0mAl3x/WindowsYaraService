@@ -1,0 +1,3 @@
+[submodule "WindowsYaraService/Modules/Update/YaraRulesScrapper"]
+	path = WindowsYaraService/Modules/Update/YaraRulesScrapper
+	url = https://github.com/T0mAl3x/YaraRulesScrapper.git
