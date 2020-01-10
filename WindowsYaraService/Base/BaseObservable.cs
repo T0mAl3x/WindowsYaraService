@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Base
 {
-    abstract class BaseObservable<LISTENER_CLASS>
+    public abstract class BaseObservable<LISTENER_CLASS>
     {
         // thread-safe set of listeners
-        protected readonly SynchronizedCollection<LISTENER_CLASS> mListeners = new SynchronizedCollection<LISTENER_CLASS>();
+        internal readonly SynchronizedCollection<LISTENER_CLASS> mListeners = new SynchronizedCollection<LISTENER_CLASS>();
 
         public void RegisterListener(LISTENER_CLASS listener)
         {
@@ -21,7 +21,7 @@ namespace WindowsYaraService.Base
             mListeners.Remove(listener);
         }
 
-        protected SynchronizedCollection<LISTENER_CLASS> GetListeners()
+        internal SynchronizedCollection<LISTENER_CLASS> GetListeners()
         {
             return mListeners;
         }

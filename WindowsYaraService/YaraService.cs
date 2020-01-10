@@ -5,6 +5,10 @@ using System.Threading;
 using WindowsYaraService.Base.Jobs;
 using WindowsYaraService.Base;
 using WindowsYaraService.Modules.Scanner;
+using static WindowsYaraService.Base.Jobs.common.NetJob;
+using WindowsYaraService.Base.Jobs.common;
+using static WindowsYaraService.Modules.Update;
+using System;
 
 namespace WindowsYaraService
 {
@@ -31,11 +35,13 @@ namespace WindowsYaraService
         public int dwWaitHint;
     };
 
-    public partial class YaraService : ServiceBase, Detector.IListener, ScanManager.IListener
+    public partial class YaraService : ServiceBase, Detector.IListener, ScanManager.IListener, INetworkListener, IUpdateListener
     {
         private Detector mDetector;
         private ScanManager mScanManager;
         private Scheduler mScheduler;
+        private Networking mNetworking;
+        private Update mUpdate;
 
         private Thread mJobFetcher;
 
@@ -55,15 +61,19 @@ namespace WindowsYaraService
             eventLog1.Source = eventSourceName;
             eventLog1.Log = logName;
 
+            // Initialise Scheduler
+            mScheduler = new Scheduler();
+
             // Initialise Detector
             mDetector = new Detector();
             mDetector.RegisterListener(this);
 
-            // Initialise Scheduler
-            mScheduler = new Scheduler();
+            // Initialise Networking
+            mNetworking = new Networking();
 
-            // Initialise Scanner
-            mScanManager = new ScanManager("D:/Master/My_Dizertation/Project/rules");
+            // Initialise Update
+            mUpdate = new Update();
+            mUpdate.RegisterListener(this);
         }
 
         protected override void OnStart(string[] args)
@@ -76,23 +86,8 @@ namespace WindowsYaraService
 
             eventLog1.WriteEntry("In OnStart.");
 
-            // Fetch jobs from scheduler
-            mJobFetcher = new Thread(new ThreadStart(() =>
-            {
-                while (true)
-                {
-                    var filePath = mScheduler.FetchJobForScanning();
-                    if (filePath == null)
-                    {
-                        FetchSignal.waitHandle.WaitOne();
-                        continue;
-                    }
+            // Need to update rules
 
-                    mScanManager.ScanFile(filePath);
-                    
-                }
-            }));
-            mJobFetcher.Start();
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
@@ -128,7 +123,49 @@ namespace WindowsYaraService
         // Scanner Listener
         public void OnFileScanned(InfoModel report)
         {
-            
+            // Send report to server
+        }
+
+        // Update Listener
+        public void OnRulesDownloaded()
+        {
+            // Initialise Scanner
+            string rulesPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/YaraAgent/YaraRules";
+            mScanManager = new ScanManager(rulesPath);
+
+            // Need to register
+            NetRegisterJob netRegJob = new NetRegisterJob();
+            netRegJob.RegisterListener(this);
+            mNetworking.ExecuteAsync(netRegJob);
+
+            // Unregister from updates
+            mUpdate.UnregisterListener(this);
+        }
+
+        // Registration Listener
+        public void OnSuccess(object response)
+        {
+            // Fetch jobs from scheduler
+            mJobFetcher = new Thread(new ThreadStart(() =>
+            {
+                while (true)
+                {
+                    var filePath = mScheduler.FetchJobForScanning();
+                    if (filePath == null)
+                    {
+                        FetchSignal.waitHandle.WaitOne();
+                        continue;
+                    }
+
+                    mScanManager.ScanFile(filePath);
+                }
+            }));
+            mJobFetcher.Start();
+        }
+
+        public void OnFailure(NetJob netJob)
+        {
+            // Do nothing for now
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]

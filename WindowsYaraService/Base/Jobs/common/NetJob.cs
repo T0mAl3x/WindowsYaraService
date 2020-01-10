@@ -10,10 +10,11 @@ using WindowsYaraService.Modules.Network;
 
 namespace WindowsYaraService.Base.Jobs.common
 {
-    abstract class NetJob : BaseObservable<NetJob.INetworkListener>
+    public abstract class NetJob : BaseObservable<NetJob.INetworkListener>
     {
         internal interface INetworkListener
         {
+            void OnSuccess(object response);
             void OnFailure(NetJob netJob);
         }
 
@@ -28,6 +29,12 @@ namespace WindowsYaraService.Base.Jobs.common
                 message.Headers.Add("Cookie", "cookie1=value1; cookie2=value2");
                 var result = await HttpClientSingleton.HttpClientAuthenticated.SendAsync(message);
                 result.EnsureSuccessStatusCode();
+                HandleResponse(result);
+
+                foreach (INetworkListener listener in GetListeners())
+                {
+                    listener.OnSuccess(this);
+                }
             }
             catch (HttpRequestException e)
             {

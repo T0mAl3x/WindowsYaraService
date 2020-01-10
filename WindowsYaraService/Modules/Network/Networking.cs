@@ -40,6 +40,11 @@ namespace WindowsYaraService.Modules
             });
         }
 
+        public void OnSuccess(object response)
+        {
+            // Do nothing for now
+        }
+
         public void OnFailure(NetJob netJob)
         {
             FailedJobs.Add(netJob);
