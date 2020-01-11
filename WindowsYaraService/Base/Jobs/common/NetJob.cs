@@ -7,12 +7,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using WindowsYaraService.Modules.Network;
+using static WindowsYaraService.Base.Jobs.common.NetJob;
 
 namespace WindowsYaraService.Base.Jobs.common
 {
-    public abstract class NetJob : BaseObservable<NetJob.INetworkListener>
+    public abstract class NetJob : BaseObservable<INetworkListener>
     {
-        internal interface INetworkListener
+        public interface INetworkListener
         {
             void OnSuccess(object response);
             void OnFailure(NetJob netJob);
