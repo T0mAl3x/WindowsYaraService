@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using WindowsYaraService.Base.Jobs;
+using WindowsYaraService.Modules.Network.Models.Register;
 
 namespace WindowsYaraService.Modules.Network.Models
 {
-    class StandardRequest
+    class RegisterResponse
     {
-        public JobType Type { get; set; }
-        public object Content { get; set; }
+        public RegisterTypes Type { get; set; }
+        public object RegisterObject { get; set; }
     }
 }

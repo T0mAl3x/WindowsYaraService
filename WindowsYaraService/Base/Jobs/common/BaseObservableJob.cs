@@ -7,7 +7,7 @@ using WindowsYaraService.Base.Jobs.common;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    public abstract class BaseObservableJob<LISTENER_TYPE> : Job, ObservableJob<LISTENER_TYPE>
+    public abstract class BaseObservableJob<LISTENER_TYPE> : InternalJob, ObservableJob<LISTENER_TYPE>
     {
         // thread-safe set of listeners
         protected readonly SynchronizedCollection<LISTENER_TYPE> mListeners = new SynchronizedCollection<LISTENER_TYPE>();

@@ -47,7 +47,7 @@ namespace WindowsYaraService.Modules.Scanner
                 if (scanMessage != null)
                     model.Messages.Add(scanMessage);
 
-                foreach (IListener listener in GetListeners())
+                foreach (IListener listener in GetListeners().Keys)
                 {
                     listener.OnFileScanned(model);
                 }

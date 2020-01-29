@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    class ScanJob : Job
+    class ScanJob : InternalJob
     {
         readonly long mSize;
         public ScanJob(string filePath) : base(filePath)

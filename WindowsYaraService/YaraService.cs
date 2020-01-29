@@ -5,10 +5,13 @@ using System.Threading;
 using WindowsYaraService.Base.Jobs;
 using WindowsYaraService.Base;
 using WindowsYaraService.Modules.Scanner;
-using static WindowsYaraService.Base.Jobs.common.NetJob;
 using WindowsYaraService.Base.Jobs.common;
-using static WindowsYaraService.Modules.Update;
 using System;
+using WindowsYaraService.Modules.Registrator;
+using System.Globalization;
+using WindowsYaraService.Base.Common;
+using System.Text;
+using System.Net;
 
 namespace WindowsYaraService
 {
@@ -35,13 +38,16 @@ namespace WindowsYaraService
         public int dwWaitHint;
     };
 
-    public partial class YaraService : ServiceBase, Detector.IListener, ScanManager.IListener, INetworkListener, IUpdateListener
+    public partial class YaraService : ServiceBase, Detector.IListener, ScanManager.IListener, Update.IListener, Registrator.IListener, Networking.IListener
     {
         private Detector mDetector;
         private ScanManager mScanManager;
         private Scheduler mScheduler;
         private Networking mNetworking;
         private Update mUpdate;
+        private Registrator mRegistrator;
+
+        public static string _GUID;
 
         private Thread mJobFetcher;
 
@@ -61,6 +67,24 @@ namespace WindowsYaraService
             eventLog1.Source = eventSourceName;
             eventLog1.Log = logName;
 
+            // Generate APP GUID
+            byte[] encGuid = FileHandler.ReadBytesToFile("GUID");
+            if (encGuid != null)
+            {
+                byte[] decGuid = DataProtection.Unprotect(encGuid);
+                _GUID = Encoding.ASCII.GetString(decGuid);
+            }
+            else
+            {
+                _GUID = Guid.NewGuid().ToString();
+                encGuid = DataProtection.Protect(Encoding.ASCII.GetBytes(_GUID));
+                FileHandler.WriteBytesToFile("GUID", encGuid);
+            }
+
+            // Trusting all certificates
+            ServicePointManager.ServerCertificateValidationCallback +=
+                (sender, cert, chain, sslPolicyErrors) => true;
+
             // Initialise Scheduler
             mScheduler = new Scheduler();
 
@@ -70,10 +94,15 @@ namespace WindowsYaraService
 
             // Initialise Networking
             mNetworking = new Networking();
+            mNetworking.RegisterListener(this);
 
             // Initialise Update
             mUpdate = new Update();
             mUpdate.RegisterListener(this);
+
+            // Initialise Registrator
+            mRegistrator = new Registrator(mNetworking);
+            mRegistrator.RegisterListener(this);
         }
 
         protected override void OnStart(string[] args)
@@ -85,9 +114,6 @@ namespace WindowsYaraService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
             eventLog1.WriteEntry("In OnStart.");
-
-            // Need to update rules
-
 
             // Update the service state to Running.
             serviceStatus.dwCurrentState = ServiceState.SERVICE_RUNNING;
@@ -112,60 +138,75 @@ namespace WindowsYaraService
         // Detector Listener
         public void OnFileCreated(string filePath)
         {
-            mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
+            mScheduler.ScheduleJobForScannig(new ScheduleJob(filePath));
         }
 
         public void OnFileChanged(string filePath)
         {
-            mScheduler.ScheduleJobForScannig(new Base.Jobs.ScheduleJob(filePath));
+            mScheduler.ScheduleJobForScannig(new ScheduleJob(filePath));
         }
 
         // Scanner Listener
         public void OnFileScanned(InfoModel report)
         {
-            // Send report to server
+            // IF: AuthFailed set, save on local disk
+            // ELSE: Check for local reports; Send reports to server
         }
 
         // Update Listener
         public void OnRulesDownloaded()
         {
             // Initialise Scanner
-            string rulesPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "/YaraAgent/YaraRules";
+            string rulesPath = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\YaraRules";
             mScanManager = new ScanManager(rulesPath);
-
-            // Need to register
-            NetRegisterJob netRegJob = new NetRegisterJob();
-            netRegJob.RegisterListener(this);
-            mNetworking.ExecuteAsync(netRegJob);
-
             // Unregister from updates
             mUpdate.UnregisterListener(this);
+
+            mRegistrator.Enroll();
         }
 
         // Registration Listener
-        public void OnSuccess(object response)
+        public void OnRegister()
         {
             // Fetch jobs from scheduler
-            mJobFetcher = new Thread(new ThreadStart(() =>
-            {
-                while (true)
-                {
-                    var filePath = mScheduler.FetchJobForScanning();
-                    if (filePath == null)
-                    {
-                        FetchSignal.waitHandle.WaitOne();
-                        continue;
-                    }
-
-                    mScanManager.ScanFile(filePath);
-                }
-            }));
+            AUTH_FAILED = false;
+            mJobFetcher = new Thread(new ThreadStart(FetchScheduledJob));
             mJobFetcher.Start();
         }
 
-        public void OnFailure(NetJob netJob)
+        private void FetchScheduledJob()
         {
-            // Do nothing for now
+            while (true)
+            {
+                var filePath = mScheduler.FetchJobForScanning();
+                if (filePath == null)
+                {
+                    FetchSignal.waitHandle.WaitOne();
+                    continue;
+                }
+
+                mScanManager.ScanFile(filePath);
+            }
+        }
+
+        private readonly object AUTH_FAILED_LOCK;
+        private bool AUTH_FAILED = false;
+        public void OnAuthFailed(InfoModel infoModel)
+        {
+            string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff",
+                                            CultureInfo.InvariantCulture);
+            string infoModelString = Newtonsoft.Json.JsonConvert.SerializeObject(infoModel);
+            FileHandler.WriteTextToFile(timestamp, infoModelString);
+
+            lock (AUTH_FAILED_LOCK)
+            {
+                if (!AUTH_FAILED)
+                {
+                    mJobFetcher.Abort();
+                    mRegistrator.Enroll();
+                    AUTH_FAILED = true;
+                }
+            }
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]

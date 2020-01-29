@@ -5,13 +5,22 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using WindowsYaraService.Base;
 using WindowsYaraService.Base.Jobs.common;
+using WindowsYaraService.Modules.Network;
+using WindowsYaraService.Modules.Scanner;
+using static WindowsYaraService.Modules.Networking;
 
 namespace WindowsYaraService.Modules
 {
-    class Networking : NetJob.INetworkListener
+    class Networking : BaseObservable<IListener>, INetworkListener
     {
-        private SynchronizedCollection<NetJob> FailedJobs = new SynchronizedCollection<NetJob>();
+        public interface IListener
+        {
+            void OnAuthFailed(InfoModel infoModel);
+        }
+
+        private SynchronizedCollection<INetJob> FailedJobs = new SynchronizedCollection<INetJob>();
         private Thread HandleFailedJobs;
 
         public Networking()
@@ -22,7 +31,7 @@ namespace WindowsYaraService.Modules
                 {
                     if (FailedJobs.Count > 0)
                     {
-                        NetJob job = FailedJobs.First();
+                        INetJob job = FailedJobs.First();
                         ExecuteAsync(job);
                         FailedJobs.RemoveAt(0);
                     }
@@ -31,7 +40,7 @@ namespace WindowsYaraService.Modules
             HandleFailedJobs.Start();
         }
 
-        public void ExecuteAsync(NetJob netJob)
+        public void ExecuteAsync(INetJob netJob)
         {
             netJob.RegisterListener(this);
             ThreadPool.QueueUserWorkItem(async i =>
@@ -42,10 +51,25 @@ namespace WindowsYaraService.Modules
 
         public void OnSuccess(object response)
         {
-            // Do nothing for now
+            try
+            {
+                StandardResponse standardResponse = response as StandardResponse;
+                if (standardResponse.Code == NetworkCodes.NOT_AUTH)
+                {
+                    InfoModel infoModel = standardResponse.Response as InfoModel;
+                    foreach (var listener in GetListeners())
+                    {
+                        listener.Key.OnAuthFailed(infoModel);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
         }
 
-        public void OnFailure(NetJob netJob)
+        public void OnFailure(INetJob netJob, string errorMessage)
         {
             FailedJobs.Add(netJob);
         }

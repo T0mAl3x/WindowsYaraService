@@ -41,7 +41,7 @@ namespace WindowsYaraService.Modules
 
         private void FileSystemWatcher_Changed(object sender, FileSystemEventArgs e)
         {
-            foreach (IListener listener in GetListeners())
+            foreach (IListener listener in GetListeners().Keys)
             {
                 listener.OnFileChanged(e.FullPath);
             }
@@ -49,7 +49,7 @@ namespace WindowsYaraService.Modules
 
         private void FileSystemWatcher_Created(object sender, FileSystemEventArgs e)
         {
-            foreach (IListener listener in GetListeners())
+            foreach (IListener listener in GetListeners().Keys)
             {
                 listener.OnFileCreated(e.FullPath);
             }

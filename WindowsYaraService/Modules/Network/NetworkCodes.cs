@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WindowsYaraService.Modules.Network.Models
+namespace WindowsYaraService.Modules.Network
 {
-    class RegisterResponse
+    public enum NetworkCodes
     {
-        public string Token { get; set; }
+        OK = 200,
+        NOT_AUTH = 401
     }
 }

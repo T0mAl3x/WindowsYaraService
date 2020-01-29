@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Modules.Scanner
 {
-    class RegisterModel
+    class EnrollmentModel
     {
         public string SystemName { get; set; }
         public string OsName { get; set; }

@@ -1,26 +1,35 @@
 ﻿using Microsoft.VisualBasic.Devices;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Management;
+using System.Net.Http;
 using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
+using WindowsYaraService.Base.Common;
 using WindowsYaraService.Base.Jobs.common;
+using WindowsYaraService.Modules.Network;
 using WindowsYaraService.Modules.Network.Models;
 using WindowsYaraService.Modules.Scanner;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    class NetRegisterJob : NetJob
+    class EnrollmentJob : BaseObservable<INetworkListener>, INetJob
     {
-        public NetRegisterJob()
+        private readonly EnrollmentModel _registerModel;
+
+        public EnrollmentJob()
         {
             ComputerInfo computerInfo = new ComputerInfo();
             string systemName = Environment.MachineName;
             string osName = computerInfo.OSFullName;
             string version = computerInfo.OSVersion;
-            string guid = Guid.NewGuid().ToString();
+
+            byte[] encGuid = FileHandler.ReadBytesToFile("GUID");
+            string guid = YaraService._GUID;
+
             string macAddr = (
                             from nic in NetworkInterface.GetAllNetworkInterfaces()
                             where nic.OperationalStatus == OperationalStatus.Up
@@ -40,7 +49,7 @@ namespace WindowsYaraService.Base.Jobs
             }
             string ram = BytesConverter.ConvertToSize(computerInfo.TotalPhysicalMemory, BytesConverter.SizeUnits.GB);
 
-            var regisgerModel = new RegisterModel
+            _registerModel = new EnrollmentModel
             {
                 SystemName = systemName,
                 OsName = osName,
@@ -51,14 +60,32 @@ namespace WindowsYaraService.Base.Jobs
                 MotherBoard = motherboard,
                 RAM = ram
             };
-            InfoToSend = regisgerModel;
         }
-        protected override void HandleResponse(object response)
+
+        public async Task ExecuteAsync()
         {
-            RegisterResponse registerResponse = response as RegisterResponse;
-            byte[] token = DataProtection.Protect(Encoding.ASCII.GetBytes(registerResponse.Token));
-            string fileName = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\token.txt";
-            System.IO.File.WriteAllBytes(fileName, token);
+            try
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(_registerModel), Encoding.UTF8, "application/json");
+                var response = await HttpClientSingleton.HttpClientInstance.PostAsync("Agent/Enroll/", content);
+                response.EnsureSuccessStatusCode();
+                string responseBody = await response.Content.ReadAsStringAsync();
+                StandardResponse standardResponse = JsonConvert.DeserializeObject<StandardResponse>(responseBody);
+                string stringResponse = Newtonsoft.Json.JsonConvert.SerializeObject(standardResponse.Response);
+                RegisterResponse registerModel = JsonConvert.DeserializeObject<RegisterResponse>(stringResponse);
+
+                foreach (var listener in GetListeners())
+                {
+                    listener.Key.OnSuccess(registerModel);
+                }
+            }
+            catch(HttpRequestException e)
+            {
+                foreach (var listener in GetListeners())
+                {
+                    listener.Key.OnFailure(this, e.Message);
+                }
+            }
         }
     }
 }

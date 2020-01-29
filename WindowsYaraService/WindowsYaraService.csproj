@@ -42,6 +42,9 @@
     <Reference Include="AlphaFS, Version=2.2.0.0, Culture=neutral, PublicKeyToken=4d31a58f7d7ad5c9, processorArchitecture=MSIL">
       <HintPath>..\packages\AlphaFS.2.2.6\lib\net452\AlphaFS.dll</HintPath>
     </Reference>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.5.0, Culture=neutral, PublicKeyToken=0e99375e54769942">
+      <HintPath>..\packages\BouncyCastle.1.8.5\lib\BouncyCastle.Crypto.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.12.0.2\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -73,29 +76,38 @@
   <ItemGroup>
     <Compile Include="Base\BaseObservable.cs" />
     <Compile Include="Base\Common\DataProtection.cs" />
+    <Compile Include="Base\Common\FileHandler.cs" />
     <Compile Include="Base\FetchSignal.cs" />
     <Compile Include="Base\Jobs\common\BaseObservableJob.cs" />
     <Compile Include="Base\Common\BytesConverter.cs" />
-    <Compile Include="Base\Jobs\common\Job.cs" />
-    <Compile Include="Base\Jobs\common\NetJob.cs" />
+    <Compile Include="Base\Jobs\common\INetworkListener.cs" />
+    <Compile Include="Base\Jobs\common\InternalJob.cs" />
+    <Compile Include="Base\Jobs\common\INetJob.cs" />
     <Compile Include="Base\Jobs\common\ObservableJob.cs" />
     <Compile Include="Base\Jobs\JobType.cs" />
-    <Compile Include="Base\Jobs\NetRegisterJob.cs" />
-    <Compile Include="Base\Jobs\NetScanJob.cs" />
-    <Compile Include="Base\Jobs\ScanJob.cs" />
+    <Compile Include="Base\Jobs\NetJobs\EnrollmentJob.cs" />
+    <Compile Include="Base\Jobs\NetJobs\InterogateEnrollJob.cs" />
+    <Compile Include="Base\Jobs\NetJobs\NetScanJob.cs" />
+    <Compile Include="Base\Jobs\InternalJobs\ScanJob.cs" />
+    <Compile Include="Base\Jobs\NetJobs\PrimalCertJob.cs" />
+    <Compile Include="Base\Jobs\NetJobs\TokenJob.cs" />
     <Compile Include="Base\Jobs\ScheduleJob.cs" />
     <Compile Include="Modules\Detector.cs" />
     <Compile Include="Modules\Network\CookieRequestInterceptor.cs" />
     <Compile Include="Modules\Network\HttpClientSingleton.cs" />
-    <Compile Include="Modules\Network\Models\RegisterResponse.cs" />
-    <Compile Include="Modules\Network\Models\StandardRequest.cs" />
+    <Compile Include="Modules\Network\Models\Register\RegisterResponse.cs" />
+    <Compile Include="Modules\Network\Models\Register\RegisterTypes.cs" />
+    <Compile Include="Modules\Network\NetworkCodes.cs" />
     <Compile Include="Modules\Network\Networking.cs" />
     <Compile Include="Modules\Network\Models\Scan\InfoModel.cs" />
     <Compile Include="Modules\Network\Models\Scan\Message.cs" />
     <Compile Include="Modules\Network\Models\Scan\MessageType.cs" />
     <Compile Include="Modules\Network\Models\Scan\Scan.cs" />
     <Compile Include="Modules\Network\Models\Scan\YaraResult.cs" />
-    <Compile Include="Modules\Network\Models\RegisterModel.cs" />
+    <Compile Include="Modules\Network\Models\Register\EnrollmentModel.cs" />
+    <Compile Include="Modules\Network\StandardResponse.cs" />
+    <Compile Include="Modules\Registrator\CertHandler.cs" />
+    <Compile Include="Modules\Registrator\Registrator.cs" />
     <Compile Include="Modules\Scanner\ScanManager.cs" />
     <Compile Include="Modules\Scheduler.cs" />
     <Compile Include="Modules\Scanner\VirusTotalScanner.cs" />
@@ -118,7 +130,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Modules\Update\start_scrapper.bat" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

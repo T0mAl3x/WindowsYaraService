@@ -9,11 +9,9 @@ namespace WindowsYaraService.Modules.Network
 {
     class HttpClientSingleton
     {
-        public static readonly HttpClient HttpClientAuthenticated = new HttpClient();
-
-        public HttpClientSingleton()
+        public static readonly HttpClient HttpClientInstance = new HttpClient()
         {
-
-        }
+            BaseAddress = new Uri("https://localhost:44335/")
+        };
     }
 }

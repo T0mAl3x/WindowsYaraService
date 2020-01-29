@@ -9,9 +9,9 @@ using WindowsYaraService.Base;
 
 namespace WindowsYaraService.Modules
 {
-    class Update : BaseObservable<Update.IUpdateListener>
+    class Update : BaseObservable<Update.IListener>
     {
-        internal interface IUpdateListener
+        internal interface IListener
         {
             void OnRulesDownloaded();
         }
@@ -28,10 +28,18 @@ namespace WindowsYaraService.Modules
         {
             while(true)
             {
-                string pathToYaraScrapper = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\YaraAgent\\YaraRulesScrapper";
-                string pathToYaraRules = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + "\\YaraAgent\\YaraRules";
+                Thread.Sleep(10 * 1000);
+                string pathToYaraScrapper = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\YaraRulesScrapper";
+                string pathToYaraRules = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\YaraRules";
+                pathToYaraRules = pathToYaraRules.Replace("\\", "/");
                 string command = $"CD {pathToYaraScrapper} & .\\venv\\Scripts\\activate & scrapy crawl yara_spider -a files_path={pathToYaraRules}";
-                ExecuteCommand(command);
+                //ExecuteCommand(command);
+
+                foreach(IListener listener in GetListeners().Keys)
+                {
+                    listener.OnRulesDownloaded();
+                }
+
                 Thread.Sleep(5 * 60 * 1000);
             }
         }
@@ -39,7 +47,7 @@ namespace WindowsYaraService.Modules
         private void ExecuteCommand(string command)
         {
             var processInfo = new ProcessStartInfo("cmd.exe", "/c " + command);
-            //processInfo.CreateNoWindow = true;
+            processInfo.CreateNoWindow = false;
             processInfo.UseShellExecute = false;
             //processInfo.RedirectStandardError = true;
             //processInfo.RedirectStandardOutput = true;
@@ -47,11 +55,11 @@ namespace WindowsYaraService.Modules
             var process = Process.Start(processInfo);
 
             //process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
-            //    Console.WriteLine("output>>" + e.Data);
+            //    EventLog.WriteEntry("Application", "output Data>> " + e.Data, EventLogEntryType.Information);
             //process.BeginOutputReadLine();
 
             //process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
-            //    Console.WriteLine("error>>" + e.Data);
+            //    EventLog.WriteEntry("Application", "output Error>> " + e.Data, EventLogEntryType.Information);
             //process.BeginErrorReadLine();
 
             process.WaitForExit();

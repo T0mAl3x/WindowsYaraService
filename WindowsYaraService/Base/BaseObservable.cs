@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,19 +10,20 @@ namespace WindowsYaraService.Base
     public abstract class BaseObservable<LISTENER_CLASS>
     {
         // thread-safe set of listeners
-        internal readonly SynchronizedCollection<LISTENER_CLASS> mListeners = new SynchronizedCollection<LISTENER_CLASS>();
+        internal readonly ConcurrentDictionary<LISTENER_CLASS, object> mListeners = new ConcurrentDictionary<LISTENER_CLASS, object>();
 
         public void RegisterListener(LISTENER_CLASS listener)
         {
-            mListeners.Add(listener);
+            mListeners.TryAdd(listener, null);
         }
 
         public void UnregisterListener(LISTENER_CLASS listener)
         {
-            mListeners.Remove(listener);
+            object temp;
+            mListeners.TryRemove(listener, out temp);
         }
 
-        internal SynchronizedCollection<LISTENER_CLASS> GetListeners()
+        internal ConcurrentDictionary<LISTENER_CLASS, object> GetListeners()
         {
             return mListeners;
         }
