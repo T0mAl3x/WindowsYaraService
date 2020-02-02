@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,41 +9,30 @@ namespace WindowsYaraService.Base.Common
 {
     static public class FileHandler
     {
-        private static readonly string DATA_PATH = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\";
+        private static readonly string AGENT_PATH = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\";
+        public static readonly string REPORT_ARCHIVE = AGENT_PATH + "ReportArchive\\";
+        public static readonly string RULES_PATH = AGENT_PATH + "YaraRules\\";
 
-        public static readonly string REPORT_ARCHIVE = DATA_PATH + "ReportArchive\\";
         public static void WriteBytesToFile(string fileName, byte[] bytes)
         {
             try
             {
-                System.IO.File.WriteAllBytes(DATA_PATH + fileName, bytes);
+                File.WriteAllBytes(fileName, bytes);
             }
-            catch(Exception ex)
+            catch (Exception)
             {
 
             }
         }
 
-        public static void WriteTextToFile(string fileName, string text)
+        public static byte[] ReadTextFromFile(string fileName)
         {
             try
             {
-                System.IO.File.WriteAllText(DATA_PATH + fileName, text);
+                byte[] content = File.ReadAllBytes(fileName);
+                return content;
             }
-            catch (Exception ex)
-            {
-
-            }
-        }
-
-        public static byte[] ReadBytesToFile(string fileName)
-        {
-            try
-            {
-                byte[] bytes = System.IO.File.ReadAllBytes(DATA_PATH + fileName);
-                return bytes;
-            }
-            catch(Exception ex)
+            catch (Exception)
             {
                 return null;
             }

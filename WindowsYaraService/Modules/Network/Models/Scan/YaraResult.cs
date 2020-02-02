@@ -8,7 +8,7 @@ namespace WindowsYaraService.Modules.Scanner.Models
 {
     public class YaraResult
     {
-        public Dictionary<string, object> Meta { get; set; }
+        public Dictionary<string, string> Meta { get; set; }
         public string Identifier { get; set; }
     }
 }

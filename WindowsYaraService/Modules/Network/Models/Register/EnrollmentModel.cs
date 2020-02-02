@@ -11,7 +11,6 @@ namespace WindowsYaraService.Modules.Scanner
         public string SystemName { get; set; }
         public string OsName { get; set; }
         public string Version { get; set; }
-        public string GUID { get; set; }
         public string MAC { get; set; }
         public string Processor { get; set; }
         public string MotherBoard { get; set; }

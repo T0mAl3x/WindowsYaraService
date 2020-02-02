@@ -36,16 +36,19 @@ namespace WindowsYaraService.Modules
             //}
             //else
             //{
-            FileReport fileReport;
+            FileReport fileReport = null;
             if (scanJob.GetSize() < 33553369 && scanJob.GetSize() > 0)
             {
-                byte[] file = File.ReadAllBytes(scanJob.mFilePath);
-                ScanResult fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
-                fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
-            }
-            else
-            {
-                fileReport = null;
+                try
+                {
+                    byte[] file = File.ReadAllBytes(scanJob.mFilePath);
+                    ScanResult fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
+                    fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
+                }
+                catch(Exception ex)
+                {
+
+                }
             }
 
             //    PrintScan(fileResult);
@@ -80,7 +83,6 @@ namespace WindowsYaraService.Modules
                     SHA1 = fileReport.SHA1,
                     SHA256 = fileReport.SHA256,
                     FilePath = scanJob.mFilePath,
-                    TerminalId = "1",
                     Positives = fileReport.Positives,
                     Total = fileReport.Total
                 };
@@ -96,15 +98,12 @@ namespace WindowsYaraService.Modules
                     };
                     Scans.Add(scanModel);
                 }
+                infoModel.Scans = Scans;
             }
             else
             {
                 infoModel = new InfoModel();
-                infoModel.Messages.Add(
-                    new Message {
-                        Information = "The file is too large for Virus Total or has 0 bytes", 
-                        Type = MessageType.WARNING
-                    });
+                infoModel.Messages.Add("The file is too large for Virus Total, has 0 bytes or license limit.");
             }
             return infoModel;
         }

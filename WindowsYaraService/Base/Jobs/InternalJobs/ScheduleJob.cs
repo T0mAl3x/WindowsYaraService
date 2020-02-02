@@ -91,7 +91,7 @@ namespace WindowsYaraService.Base.Jobs
             {
                 throw exception;
             }
-            catch (IOException exception)
+            catch (IOException)
             {
                 //the file is unavailable because it is:
                 //still being written to

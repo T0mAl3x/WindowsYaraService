@@ -6,18 +6,24 @@ using System.Linq;
 using System.Management;
 using System.Net.Http;
 using System.Net.NetworkInformation;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using WindowsYaraService.Base.Common;
 using WindowsYaraService.Base.Jobs.common;
 using WindowsYaraService.Modules.Network;
-using WindowsYaraService.Modules.Network.Models;
 using WindowsYaraService.Modules.Scanner;
+using static WindowsYaraService.Base.Jobs.EnrollmentJob;
 
 namespace WindowsYaraService.Base.Jobs
 {
-    class EnrollmentJob : BaseObservable<INetworkListener>, INetJob
+    class EnrollmentJob : BaseObservable<IListener>, INetJob
     {
+        public interface IListener
+        {
+            void OnEnrolled();
+        }
+
         private readonly EnrollmentModel _registerModel;
 
         public EnrollmentJob()
@@ -26,9 +32,6 @@ namespace WindowsYaraService.Base.Jobs
             string systemName = Environment.MachineName;
             string osName = computerInfo.OSFullName;
             string version = computerInfo.OSVersion;
-
-            byte[] encGuid = FileHandler.ReadBytesToFile("GUID");
-            string guid = YaraService._GUID;
 
             string macAddr = (
                             from nic in NetworkInterface.GetAllNetworkInterfaces()
@@ -54,7 +57,6 @@ namespace WindowsYaraService.Base.Jobs
                 SystemName = systemName,
                 OsName = osName,
                 Version = version,
-                GUID = guid,
                 MAC = macAddr,
                 Processor = processor,
                 MotherBoard = motherboard,
@@ -67,24 +69,32 @@ namespace WindowsYaraService.Base.Jobs
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(_registerModel), Encoding.UTF8, "application/json");
-                var response = await HttpClientSingleton.HttpClientInstance.PostAsync("Agent/Enroll/", content);
+                var request = new HttpRequestMessage()
+                {
+                    RequestUri = new Uri("Agent/Enroll/", UriKind.Relative),
+                    Method = HttpMethod.Post,
+                    Content = content
+                };
+                CertHandler _certHandler = new CertHandler();
+                X509Certificate2 clientCertificate = _certHandler.FindCertificate("YaraCA", StoreName.My, StoreLocation.LocalMachine);
+                request.Headers.Add("X-ARR-ClientCert", clientCertificate.GetRawCertDataString());
+
+                //var response = await HttpClientSingleton.HttpClientInstance.PostAsync("Agent/Enroll/", content);
+                var response = await HttpClientSingleton.HttpClientInstance.SendAsync(request);
                 response.EnsureSuccessStatusCode();
-                string responseBody = await response.Content.ReadAsStringAsync();
-                StandardResponse standardResponse = JsonConvert.DeserializeObject<StandardResponse>(responseBody);
-                string stringResponse = Newtonsoft.Json.JsonConvert.SerializeObject(standardResponse.Response);
-                RegisterResponse registerModel = JsonConvert.DeserializeObject<RegisterResponse>(stringResponse);
 
                 foreach (var listener in GetListeners())
                 {
-                    listener.Key.OnSuccess(registerModel);
+                    listener.Key.OnEnrolled();
                 }
             }
-            catch(HttpRequestException e)
+            catch(HttpRequestException ex)
             {
-                foreach (var listener in GetListeners())
-                {
-                    listener.Key.OnFailure(this, e.Message);
-                }
+                
+            }
+            catch(Exception ex)
+            {
+
             }
         }
     }

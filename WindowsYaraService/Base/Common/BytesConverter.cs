@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WindowsYaraService.Base.Jobs.common
 {
-    static class BytesConverter
+    public static class BytesConverter
     {
         public enum SizeUnits
         {

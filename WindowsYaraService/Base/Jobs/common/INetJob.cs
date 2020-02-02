@@ -2,7 +2,7 @@
 
 namespace WindowsYaraService.Base.Jobs.common
 {
-    public interface INetJob : ObservableJob<INetworkListener>
+    public interface INetJob
     {
         Task ExecuteAsync();
     }

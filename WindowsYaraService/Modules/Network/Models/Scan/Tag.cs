@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WindowsYaraService.Modules.Network
+namespace WindowsYaraService.Modules.Scanner.Models
 {
-    class CookieRequestInterceptor : DelegatingHandler
+    public enum Tag
     {
-
+        OK,
+        WARNING,
+        DANGER
     }
 }

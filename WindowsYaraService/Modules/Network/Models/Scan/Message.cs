@@ -9,6 +9,6 @@ namespace WindowsYaraService.Modules.Scanner.Models
     public class Message
     {
         public string Information { get; set; }
-        public MessageType Type { get; set; }
+        public Tag Type { get; set; }
     }
 }
