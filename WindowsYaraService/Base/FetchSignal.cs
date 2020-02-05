@@ -10,6 +10,6 @@ namespace WindowsYaraService.Base
     class FetchSignal
     {
         public static AutoResetEvent waitHandle = new AutoResetEvent(false);
-        public static AutoResetEvent waitForRegistration = new AutoResetEvent(false);
+        public static readonly object updateLock = new object();
     }
 }

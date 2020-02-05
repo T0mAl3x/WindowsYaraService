@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using VirusTotalNet;
 using VirusTotalNet.Objects;
@@ -37,13 +38,26 @@ namespace WindowsYaraService.Modules
             //else
             //{
             FileReport fileReport = null;
+            
             if (scanJob.GetSize() < 33553369 && scanJob.GetSize() > 0)
             {
                 try
                 {
                     byte[] file = File.ReadAllBytes(scanJob.mFilePath);
                     ScanResult fileResult = await mVirusTotal.ScanFileAsync(file, scanJob.mFilePath);
-                    fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
+
+                    int NR_ATTEMPTS = 3;
+                    while (NR_ATTEMPTS != 0)
+                    {
+                        fileReport = await mVirusTotal.GetFileReportAsync(fileResult.SHA256);
+                        if (fileReport.ResponseCode == FileReportResponseCode.Present)
+                        {
+                            break;
+                        }
+                        Thread.Sleep(1000);
+                        NR_ATTEMPTS--;
+                    }
+
                 }
                 catch(Exception ex)
                 {
@@ -74,7 +88,7 @@ namespace WindowsYaraService.Modules
             //    PrintScan(urlResult);
             //}
             InfoModel infoModel;
-            if (fileReport != null)
+            if (fileReport != null && fileReport.ResponseCode == FileReportResponseCode.Present)
             {
                 infoModel = new InfoModel
                 {
@@ -87,16 +101,23 @@ namespace WindowsYaraService.Modules
                     Total = fileReport.Total
                 };
                 List<Scan> Scans = new List<Scan>();
-                foreach (KeyValuePair<string, ScanEngine> scan in fileReport.Scans)
+                try
                 {
-                    var scanModel = new Scan
+                    foreach (KeyValuePair<string, ScanEngine> scan in fileReport.Scans)
                     {
-                        EngineName = scan.Key,
-                        Detected = scan.Value.Detected,
-                        Version = scan.Value.Version,
-                        Result = scan.Value.Result
-                    };
-                    Scans.Add(scanModel);
+                        var scanModel = new Scan
+                        {
+                            EngineName = scan.Key,
+                            Detected = scan.Value.Detected,
+                            Version = scan.Value.Version,
+                            Result = scan.Value.Result
+                        };
+                        Scans.Add(scanModel);
+                    }
+                }
+                catch(Exception ex)
+                {
+                    
                 }
                 infoModel.Scans = Scans;
             }

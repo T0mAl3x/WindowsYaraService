@@ -24,7 +24,6 @@ namespace WindowsYaraService.Modules
             {
                 while (true)
                 {
-                    Thread.Sleep(10 * 1000);
                     string pathToYaraScrapper = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\YaraRulesScrapper";
                     string pathToYaraRules = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) + "\\YaraAgent\\YaraRules";
                     pathToYaraRules = pathToYaraRules.Replace("\\", "/");
@@ -35,8 +34,8 @@ namespace WindowsYaraService.Modules
                     {
                         listener.OnRulesDownloaded();
                     }
-
-                    Thread.Sleep(5 * 60 * 1000);
+                    Thread.Sleep(10 * 1000);
+                    //Thread.Sleep(60 * 60 * 1000);
                 }
             }));
             mUpdateExecutor.Start();

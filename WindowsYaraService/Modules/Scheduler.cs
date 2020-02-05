@@ -12,7 +12,7 @@ namespace WindowsYaraService.Modules
 {
     class Scheduler : IListener
     {
-        private readonly SynchronizedCollection<ScheduleJob> mSmallJobs = new SynchronizedCollection<ScheduleJob>();
+        private readonly ConcurrentDictionary<ScheduleJob, object> mSmallJobs = new ConcurrentDictionary<ScheduleJob, object>();
         private readonly SynchronizedCollection<ScheduleJob> mMediumJobs = new SynchronizedCollection<ScheduleJob>();
         private readonly SynchronizedCollection<ScheduleJob> mBigJobs = new SynchronizedCollection<ScheduleJob>();
 
@@ -32,11 +32,12 @@ namespace WindowsYaraService.Modules
                 if (SmallCounter != 0 || (mMediumJobs.Count == 0 && mBigJobs.Count == 0))
                 {
                     var job = mSmallJobs.First();
-                    mSmallJobs.RemoveAt(0);
+                    object temp;
+                    mSmallJobs.TryRemove(job.Key, out temp);
                     SmallCounter--;
                     if (SmallCounter < 0)
                         SmallCounter = 0;
-                    return job.mFilePath;
+                    return job.Key.mFilePath;
                 }
             }
             if (mMediumJobs.Count != 0)
@@ -67,10 +68,10 @@ namespace WindowsYaraService.Modules
             switch (job.mPriority)
             {
                 case ScheduleJob.Priorities.SMALL:
-                    var existsSmall = mSmallJobs.Any(anyJob => anyJob.mFilePath == job.mFilePath);
+                    var existsSmall = mSmallJobs.Any(anyJob => anyJob.Key.mFilePath == job.mFilePath);
                     if (!existsSmall)
                     {
-                        mSmallJobs.Add(job);
+                        mSmallJobs.TryAdd(job, null);
                     }
                     break;
                 case ScheduleJob.Priorities.MEDIUM:

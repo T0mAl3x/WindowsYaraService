@@ -18,19 +18,14 @@ namespace WindowsYaraService.Modules.Scanner
             void OnFileScanned(InfoModel report);
         }
 
-        private readonly YaraScanner YaraScanner;
         private readonly VirusTotalScanner VirusTotalScanner;
+        private YaraScanner YaraScanner;
 
         public ScanManager()
         {
             // Initialise Scanners
-            YaraScanner = new YaraScanner();
+            YaraScanner = new YaraScanner(FileHandler.RULES_PATH);
             VirusTotalScanner = new VirusTotalScanner();
-        }
-        
-        public void SetRules(string rulesPath)
-        {
-            YaraScanner.SetRules(rulesPath);
         }
 
         public void ScanFile(string filePath)
@@ -54,13 +49,13 @@ namespace WindowsYaraService.Modules.Scanner
                 model.YaraResults = yaraResults;
 
                 // Check if virus total throw error
+                model.Date = DateTime.Now;
                 if (model.ScandId == null)
                 {
                     byte[] modelToBytes = Encoding.UTF8.GetBytes(model.GetHashCode().ToString());
                     model.SHA1 = HashHandler.ComputeSha1Hash(modelToBytes);
                     model.SHA256 = HashHandler.ComputeSha256Hash(modelToBytes);
                     model.ScandId = model.SHA256;
-                    model.Date = DateTime.Now;
                     model.FilePath = scanJob.mFilePath;
                     model.Positives = 0;
                     model.Total = 0;

@@ -27,13 +27,22 @@ namespace WindowsYaraService.Base.Jobs
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(_infoModel), Encoding.UTF8, "application/json");
-                var response = await HttpClientSingleton.HttpClientInstance.PostAsync("Agent/Enroll/", content);
+                var request = new HttpRequestMessage()
+                {
+                    RequestUri = new Uri("Agent/Report/", UriKind.Relative),
+                    Method = HttpMethod.Post,
+                    Content = content
+                };
+                CertHandler _certHandler = new CertHandler();
+                X509Certificate2 clientCertificate = _certHandler.FindCertificate("YaraCA", StoreName.My, StoreLocation.LocalMachine);
+                request.Headers.Add("X-ARR-ClientCert", clientCertificate.GetRawCertDataString());
+
+                var response = await HttpClientSingleton.HttpClientInstance.SendAsync(request);
                 response.EnsureSuccessStatusCode();
             }
             catch (HttpRequestException)
             {
-                string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss.fff",
-                                            CultureInfo.InvariantCulture);
+                string timestamp = Guid.NewGuid().ToString();
                 string infoModelString = JsonConvert.SerializeObject(_infoModel);
                 byte[] infoModelEnc = DataProtection.Protect(Encoding.UTF8.GetBytes(infoModelString));
                 FileHandler.WriteBytesToFile(FileHandler.REPORT_ARCHIVE + timestamp, infoModelEnc);

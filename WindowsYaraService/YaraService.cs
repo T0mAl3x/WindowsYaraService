@@ -81,10 +81,6 @@ namespace WindowsYaraService
             mDetector = new Detector();
             mDetector.RegisterListener(this);
 
-            // Initialise Scanner
-            mScanManager = new ScanManager();
-            mScanManager.RegisterListener(this);
-
             // Initialise Networking
             mNetworking = new Networking();
 
@@ -102,7 +98,7 @@ namespace WindowsYaraService
             SetServiceStatus(this.ServiceHandle, ref serviceStatus);
 
             eventLog1.WriteEntry("In OnStart.");
-
+            Thread.Sleep(10 * 1000);
             HttpClientSingleton.InitialiseInstance();
 
             // Build enrollment job
@@ -150,21 +146,29 @@ namespace WindowsYaraService
         {
             // Check not send reports
             List<NetScanJob> netScanJobs = new List<NetScanJob>();
-            //foreach (string file in Directory.EnumerateFiles(FileHandler.REPORT_ARCHIVE))
-            //{
-            //    byte[] encReport = FileHandler.ReadTextFromFile(file);
-            //    byte[] decReport = DataProtection.Unprotect(encReport);
-            //    string content = Encoding.UTF8.GetString(decReport);
-            //    InfoModel infoModel = JsonConvert.DeserializeObject<InfoModel>(content);
-            //    NetScanJob netScanJob = new NetScanJob(report);
-            //    netScanJobs.Add(netScanJob);
-            //}
+            foreach (string file in Directory.EnumerateFiles(FileHandler.REPORT_ARCHIVE))
+            {
+                try
+                {
+                    byte[] encReport = FileHandler.ReadTextFromFile(file);
+                    byte[] decReport = DataProtection.Unprotect(encReport);
+                    string content = Encoding.UTF8.GetString(decReport);
+                    InfoModel infoModel = JsonConvert.DeserializeObject<InfoModel>(content);
+                    NetScanJob netScanJob = new NetScanJob(report);
+                    netScanJobs.Add(netScanJob);
+                    FileHandler.DeleteFile(file);
+                }
+                catch (Exception ex)
+                {
 
-            //netScanJobs.Add(new NetScanJob(report));
-            //foreach (NetScanJob job in netScanJobs)
-            //{
-            //    mNetworking.ExecuteAsync(job);
-            //}
+                }
+            }
+
+            netScanJobs.Add(new NetScanJob(report));
+            foreach (NetScanJob job in netScanJobs)
+            {
+                mNetworking.ExecuteAsync(job);
+            }
         }
         /*
          * *******************************************************************************
@@ -172,32 +176,40 @@ namespace WindowsYaraService
 
 
         // Update Listener
+        bool FIRST_TIME_UPDATE = false;
         public void OnRulesDownloaded()
         {
-            mScanManager.SetRules(FileHandler.RULES_PATH);
-            // Fetch jobs from scheduler
-            mJobFetcher = new Thread(new ThreadStart(FetchScheduledJob));
-            mJobFetcher.Start();
+            // Initialise Scanner
+            mScanManager = new ScanManager();
+            mScanManager.RegisterListener(this);
+
+            FIRST_TIME_UPDATE = true;
+            mUpdate.UnregisterListener(this);
         }
 
         private void FetchScheduledJob()
         {
             while (true)
             {
-                var filePath = mScheduler.FetchJobForScanning();
-                if (filePath == null)
+                if (FIRST_TIME_UPDATE)
                 {
-                    FetchSignal.waitHandle.WaitOne();
-                    continue;
+                    var filePath = mScheduler.FetchJobForScanning();
+                    if (filePath == null)
+                    {
+                        FetchSignal.waitHandle.WaitOne();
+                        continue;
+                    }
+                    mScanManager.ScanFile(filePath);
                 }
-
-                mScanManager.ScanFile(filePath);
             }
         }
 
         public void OnEnrolled()
         {
             mUpdate.ExecuteUpdate();
+            // Fetch jobs from scheduler
+            mJobFetcher = new Thread(new ThreadStart(FetchScheduledJob));
+            mJobFetcher.Start();
         }
 
         [DllImport("advapi32.dll", SetLastError = true)]

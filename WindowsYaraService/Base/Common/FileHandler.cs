@@ -19,7 +19,7 @@ namespace WindowsYaraService.Base.Common
             {
                 File.WriteAllBytes(fileName, bytes);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
 
             }
@@ -32,9 +32,21 @@ namespace WindowsYaraService.Base.Common
                 byte[] content = File.ReadAllBytes(fileName);
                 return content;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 return null;
+            }
+        }
+
+        public static void DeleteFile(string fileName)
+        {
+            try
+            {
+                File.Delete(fileName);
+            }
+            catch (Exception ex)
+            {
+
             }
         }
     }

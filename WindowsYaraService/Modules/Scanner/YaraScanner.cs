@@ -19,7 +19,7 @@ namespace WindowsYaraService.Modules
         private YSContext YSContext = new YSContext();
         private YSRules YSRules = null;
 
-        public void SetRules(string rulesPath)
+        public YaraScanner(string rulesPath)
         {
             List<string> mRuleFilenames = Directory.GetFiles(rulesPath, "*.yar", System.IO.SearchOption.AllDirectories).ToList();
             for (int index = 0; index < mRuleFilenames.Count; index++)
@@ -44,7 +44,6 @@ namespace WindowsYaraService.Modules
 
                 //  Get matches
                 List<YSMatches> Matches = YSInstance.ScanFile(Filename, YSRules, null, 0);
-
                 //  Iterate over matches
                 if (Matches.Count != 0)
                 {
@@ -53,11 +52,11 @@ namespace WindowsYaraService.Modules
                         var yaraResult = new YaraResult();
                         yaraResult.Identifier = match.Rule.Identifier;
                         yaraResult.Meta = new Dictionary<string, string>();
-                        foreach (var item in yaraResult.Meta)
+                        foreach (var item in match.Rule.Meta)
                         {
                             if (item.Value is string)
                             {
-                                yaraResult.Meta.Add(item.Key, item.Value);
+                                yaraResult.Meta.Add(item.Key, item.Value as string);
                             }
                         }
                         yaraResults.Add(yaraResult);
